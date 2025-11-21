@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bao Retro Camera App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and Babel CDNs - Babel is needed to process JSX directly in the browser -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Framer Motion and html2canvas CDNs (already in the original code) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/framer-motion/10.16.4/framer-motion.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // FIX: Safely initialize 'motion' or use a placeholder if the CDN hasn't loaded yet.
+        // This logic is adapted to work within the Babel script tag.
+        const { useState, useEffect, useRef, useCallback, forwardRef } = React;
+        
+        // Wait for FramerMotion to be defined
+        let motion = {
+            div: forwardRef(({ drag, dragMomentum, initial, animate, transition, ...props }, ref) => (
+                <div ref={ref} {...props} />
+            )),
+        };
+
+        // Check and assign Framer Motion after a short delay to ensure CDN load
+        setTimeout(() => {
+            if (window.FramerMotion && window.FramerMotion.motion) {
+                motion = window.FramerMotion.motion;
+                // Force re-render of the App to use the actual motion component
+                // This is a simple fix for single-file demos, in production you'd use bundlers.
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(<App />);
+            }
+        }, 500);
+
+
+        // Helper for icons (simulating lucide-react)
+        const Icon = ({ name, className, size = 16, onClick }) => {
+          const iconMap = {
+            Camera: (
+              <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}>
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            ),
+            Pencil: (
+              <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}>
+                <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
+            ),
+            RefreshCw: (
+              <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}>
+                <path d="M23 4v6h-6" />
+                <path d="M1 20v-6h6" />
+                <path d="M3.5 15a9 9 0 0 1 14.5-9" />
+                <path d="M20.5 9a9 9 0 0 1-14.5 9" />
+              </svg>
+            ),
+            Download: (
+              <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            ),
+            Trash2: (
+              <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}>
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M2 6h20" />
+              </svg>
+            ),
+          };
+          return iconMap[name] || null;
+        };
+
+        // --- API and Utility Functions ---
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        const generateShutterSound = () => {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          // Shutter click effect (short, high frequency burst)
+          oscillator.type = 'square';
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+
+          // Rapid decay
+          gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.1);
+        };
+
+
+        const fetchCaption = async (dataUrl) => {
+            // 1. Prepare data
+            const base64Data = dataUrl.split(',')[1];
+            const mimeType = dataUrl.split(',')[0].match(/:(.*?);/)?.[1] || 'image/png';
+            const userLanguage = navigator.language || 'en-US';
+
+            // 2. Prepare API Call
+            const systemPrompt = `You are a retro photo caption generator. Your task is to analyze the image content and generate a short, warm, and poetic blessing or nice comment suitable for the bottom of a Polaroid photo. The response MUST be ONLY the caption text, nothing else. The tone should be slightly nostalgic and positive. The output language MUST be ${userLanguage}.`;
+            const userQuery = "Generate a caption for this photo.";
+            const apiKey = "" 
+            const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key='; // Note: API Key will be provided by the environment
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: userQuery },
+                            {
+                                inlineData: {
+                                    mimeType: mimeType,
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }
+                ],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            // 3. API Call with Retries
+            const MAX_RETRIES = 3;
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 429 && i < MAX_RETRIES - 1) {
+                            const delayTime = Math.pow(2, i) * 1000;
+                            await delay(delayTime);
+                            continue; 
+                        }
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (text) {
+                        return text.trim();
+                    } else {
+                        return "A wonderful memory captured in time.";
+                    }
+
+                } catch (error) {
+                    console.error('Gemini API Error:', error);
+                    // On failure, return a friendly default caption
+                    return "Life is better when you're smiling.";
+                }
+            }
+            return "The light remembers this moment well."; // Fallback after all retries
+        };
+
+        // --- PhotoCard Component ---
+
+        const PhotoCard = forwardRef(({ photo, onDelete, onUpdateCaption, isDeveloping, isEjecting }, ref) => {
+            const cardRef = useRef(null);
+            const [isHovering, setIsHovering] = useState(false);
+            const [isEditing, setIsEditing] = useState(false);
+            const [editValue, setEditValue] = useState(photo.caption);
+
+            // Development effect: Blur to clear transition
+            const developmentStyle = {
+                filter: isDeveloping ? `blur(${10 - photo.developmentProgress * 10}px)` : 'none',
+                transition: 'filter 3s ease-out',
+                opacity: isDeveloping && photo.developmentProgress < 0.1 ? 0.3 : 1, // Start slightly faded
+            };
+
+            // Handle Edit Mode
+            const handleSave = () => {
+                onUpdateCaption(photo.id, editValue);
+                setIsEditing(false);
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSave();
+                } else if (e.key === 'Escape') {
+                    setEditValue(photo.caption);
+                    setIsEditing(false);
+                }
+            };
+
+            // Re-generate caption
+            const handleRegenerate = async () => {
+                setEditValue('Generating new caption...');
+                const newCaption = await fetchCaption(photo.dataUrl);
+                onUpdateCaption(photo.id, newCaption);
+                setEditValue(newCaption);
+            };
+
+            // Download Handler (using html2canvas)
+            const handleDownload = async () => {
+                if (typeof window.html2canvas === 'undefined') {
+                    console.error("html2canvas is not loaded. Cannot download.");
+                    return;
+                }
+
+                const canvas = await window.html2canvas(cardRef.current, {
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null, // Transparent background for the output image
+                    scale: 2, // Use a higher scale for better resolution
+                });
+
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = `BaoRetroPhoto_${photo.date.replace(/[^a-z0-9]/gi, '_')}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            return (
+                <motion.div
+                    ref={cardRef}
+                    drag={!isEjecting} // Cannot drag while ejecting
+                    dragMomentum={false}
+                    onDragStart={() => isEjecting ? null : setIsHovering(true)}
+                    onDragEnd={(event, info) => {
+                        if (isEjecting) return;
+                        // Update position state when drag ends
+                        onUpdateCaption(photo.id, photo.caption, {
+                            x: info.point.x,
+                            y: info.point.y
+                        });
+                        setIsHovering(false);
+                    }}
+                    initial={{
+                        opacity: 0.1,
+                        y: 0,
+                        rotate: (Math.random() - 0.5) * 10 // Slight initial random tilt
+                    }}
+                    animate={isEjecting ? {
+                        opacity: 1,
+                        y: '-40%', // Ejection animation target
+                    } : {
+                        opacity: 1,
+                        y: photo.position.y || 0,
+                        x: photo.position.x || 0
+                    }}
+                    transition={{
+                        duration: isEjecting ? 0.5 : 0.1,
+                        type: isEjecting ? 'spring' : 'tween',
+                    }}
+                    className={`
+                        absolute cursor-grab bg-white p-[10px] shadow-xl rounded-md will-change-transform
+                        w-[180px] h-[240px] border-[1px] border-gray-300 transition-shadow duration-300
+                        ${isHovering && !isEjecting ? 'shadow-2xl z-50' : 'z-10'}
+                    `}
+                    // Initial positioning is relative to the camera container via the parent.
+                    style={{
+                        top: photo.isEjecting ? '0' : undefined,
+                        left: photo.isEjecting ? '50%' : undefined,
+                        transform: photo.isEjecting ? 'translateX(-50%)' : `translate(0, 0)`,
+                        // When on the wall, use the stored absolute position
+                        position: photo.isEjecting ? 'absolute' : 'fixed',
+                        ...photo.position
+                    }}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
+                >
+                    {/* Hover Toolbar (Top of Card) */}
+                    {isHovering && !isEditing && !isEjecting && (
+                        <div className="absolute top-[-30px] right-0 flex space-x-2 bg-gray-900/80 backdrop-blur-sm p-1 rounded-t-lg z-50">
+                            <Icon name="Download" size={20} className="text-white hover:text-yellow-400 transition cursor-pointer" onClick={handleDownload} />
+                            <Icon name="Trash2" size={20} className="text-white hover:text-red-400 transition cursor-pointer" onClick={() => onDelete(photo.id)} />
+                        </div>
+                    )}
+
+                    {/* Image area (3:4 aspect ratio within the polaroid frame) */}
+                    <div className="w-full h-[70%] bg-gray-200 overflow-hidden relative">
+                        <img
+                            src={photo.dataUrl}
+                            alt="Captured Moment"
+                            className="w-full h-full object-cover"
+                            style={developmentStyle}
+                        />
+                        {/* Developing Overlay (White/Faded look) */}
+                        {isDeveloping && (
+                            <div 
+                                className="absolute inset-0 bg-white transition-opacity duration-300"
+                                style={{ opacity: 1 - photo.developmentProgress }}
+                            ></div>
+                        )}
+                    </div>
+
+                    {/* Footer Text Area */}
+                    <div className="w-full mt-2 text-center text-xs font-handwritten flex flex-col justify-center items-center h-[20%] relative">
+                        <div className='flex justify-between w-full text-[10px] mb-1 opacity-70'>
+                            <span>{photo.date}</span>
+                            <span>#{photo.id.substring(0, 4)}</span>
+                        </div>
+                        
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={handleSave}
+                                onKeyDown={handleKeyDown}
+                                className="w-full text-center text-sm border-b border-gray-700 bg-transparent focus:outline-none"
+                                autoFocus
+                            />
+                        ) : (
+                            <p
+                                className="text-sm cursor-text relative group p-1 rounded-sm"
+                                onDoubleClick={() => setIsEditing(true)}
+                                onMouseEnter={() => setIsHovering(true)}
+                                onMouseLeave={() => setIsHovering(false)}
+                            >
+                                {photo.caption}
+                                
+                                {/* Text Hover Icons */}
+                                <span className="absolute inset-y-0 left-full ml-1 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Icon name="Pencil" size={14} className="text-gray-600 hover:text-blue-500 cursor-pointer" onClick={() => setIsEditing(true)} />
+                                    <Icon name="RefreshCw" size={14} className="text-gray-600 hover:text-green-500 cursor-pointer" onClick={handleRegenerate} />
+                                </span>
+                            </p>
+                        )}
+                    </div>
+                </motion.div>
+            );
+        });
+
+        // --- Main App Component ---
+
+        const App = () => {
+            const videoRef = useRef(null);
+            const canvasRef = useRef(null);
+            const [stream, setStream] = useState(null);
+            const [photos, setPhotos] = useState([]);
+            const [isLoading, setIsLoading] = useState(false);
+            const [message, setMessage] = useState('');
+
+            const CAMERA_CONTAINER_ID = 'retro-camera-container';
+
+            // 1. Initialize Webcam
+            useEffect(() => {
+                const startWebcam = async () => {
+                    try {
+                        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        setStream(mediaStream);
+                        if (videoRef.current) {
+                            videoRef.current.srcObject = mediaStream;
+                        }
+                    } catch (err) {
+                        console.error("Error accessing webcam:", err);
+                        setMessage("Error: Webcam access denied. The viewfinder will be static.");
+                    }
+                };
+
+                startWebcam();
+
+                // Cleanup function
+                return () => {
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                };
+            }, []);
+
+            // 2. Development Progress Timer
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setPhotos(currentPhotos => 
+                        currentPhotos.map(p => {
+                            if (p.isDeveloping) {
+                                const newProgress = Math.min(1, p.developmentProgress + 0.05);
+                                if (newProgress === 1) {
+                                    return { ...p, isDeveloping: false, developmentProgress: 1 };
+                                }
+                                return { ...p, developmentProgress: newProgress };
+                            }
+                            return p;
+                        })
+                    );
+                }, 300); // Update every 300ms
+
+                return () => clearInterval(interval);
+            }, []);
+
+
+            // 3. Photo Capture Logic
+            const takePhoto = useCallback(async () => {
+                if (!videoRef.current || !canvasRef.current || !stream) {
+                    setMessage("Camera not ready or stream error.");
+                    return;
+                }
+
+                setIsLoading(true);
+                generateShutterSound();
+
+                const video = videoRef.current;
+                const canvas = canvasRef.current;
+                const context = canvas.getContext('2d');
+
+                // Match the video feed's dimensions to the canvas
+                const size = 300;
+                canvas.width = size;
+                canvas.height = size;
+
+                // Draw the frame from the video
+                context.drawImage(video, 0, 0, size, size);
+                
+                const dataUrl = canvas.toDataURL('image/png');
+                const id = crypto.randomUUID();
+                const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                
+                // Initial Photo Object (isEjecting and relative position)
+                const newPhoto = {
+                    id,
+                    dataUrl,
+                    caption: 'Generating caption...',
+                    date,
+                    isDeveloping: true,
+                    developmentProgress: 0.1,
+                    isEjecting: true, // Start attached to the camera container
+                    position: { x: 0, y: 0 }
+                };
+
+                setPhotos(prev => [newPhoto, ...prev]);
+
+                try {
+                    const caption = await fetchCaption(dataUrl);
+                    
+                    // Wait for the ejection to finish before setting isEjecting to false and caption
+                    await delay(600); 
+
+                    setPhotos(prev => prev.map(p => 
+                        p.id === id 
+                        ? { 
+                            ...p, 
+                            caption: caption,
+                            isEjecting: false,
+                            // Calculate initial absolute position right after ejection (relative to the viewport)
+                            position: {
+                                x: document.getElementById(CAMERA_CONTAINER_ID).offsetLeft + (450 * 0.5) - (180 / 2),
+                                y: document.getElementById(CAMERA_CONTAINER_ID).offsetTop - (450 * 0.4),
+                            }
+                        } 
+                        : p
+                    ));
+                } catch (e) {
+                     setPhotos(prev => prev.map(p => 
+                        p.id === id 
+                        ? { 
+                            ...p, 
+                            caption: 'Caption failed to load.', 
+                            isEjecting: false,
+                            position: {
+                                x: document.getElementById(CAMERA_CONTAINER_ID).offsetLeft + (450 * 0.5) - (180 / 2),
+                                y: document.getElementById(CAMERA_CONTAINER_ID).offsetTop - (450 * 0.4),
+                            }
+                        } 
+                        : p
+                    ));
+                } finally {
+                    setIsLoading(false);
+                }
+
+            }, [stream]);
+
+            // 4. Update and Delete Handlers
+            const handleDeletePhoto = useCallback((id) => {
+                setPhotos(prev => prev.filter(p => p.id !== id));
+            }, []);
+
+            const handleUpdateCaption = useCallback((id, newCaption, newPosition) => {
+                setPhotos(prev => prev.map(p => {
+                    if (p.id === id) {
+                        return { 
+                            ...p, 
+                            caption: newCaption || p.caption, 
+                            position: newPosition || p.position
+                        };
+                    }
+                    return p;
+                }));
+            }, []);
+
+
+            return (
+                <>
+                    {/* Custom Styles for Aesthetics, Font, and Animation */}
+                    <style>{`
+                        @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+                        
+                        .font-handwritten {
+                            font-family: 'Permanent Marker', cursive;
+                            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+                        }
+
+                        /* Fixed size for the camera container */
+                        #${CAMERA_CONTAINER_ID} {
+                            width: 450px;
+                            height: 450px;
+                            bottom: 64px;
+                            left: 64px;
+                        }
+
+                        /* Video Viewfinder Masking & Positioning */
+                        .viewfinder {
+                            position: absolute;
+                            bottom: 32%;
+                            left: 62%;
+                            transform: translateX(-50%);
+                            width: 27%;
+                            height: 27%;
+                            border-radius: 50%;
+                            overflow: hidden;
+                            z-index: 30;
+                            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+                        }
+
+                        .viewfinder video {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                        }
+
+                        /* Shutter Button Clickable Area */
+                        .shutter-button {
+                            position: absolute;
+                            bottom: 40%;
+                            left: 18%;
+                            width: 11%;
+                            height: 11%;
+                            cursor: pointer;
+                            z-index: 30;
+                        }
+                    `}</style>
+                    
+                    {/* Main Application Container (Photo Wall) */}
+                    <div className="min-h-screen bg-gray-100 p-8">
+                        {/* Header */}
+                        <header className="fixed top-0 left-0 right-0 p-4 text-center z-10">
+                            <h1 className="text-4xl text-gray-800 font-handwritten tracking-wider shadow-lg bg-white/70 backdrop-blur-sm inline-block px-6 py-2 rounded-full border-2 border-gray-300">
+                                Bao Retro Camera
+                            </h1>
+                        </header>
+
+                        {/* Photo Wall (Render Photos) */}
+                        {photos.map(photo => (
+                            <PhotoCard 
+                                key={photo.id}
+                                photo={photo}
+                                onDelete={handleDeletePhoto}
+                                onUpdateCaption={handleUpdateCaption}
+                                isDeveloping={photo.isDeveloping}
+                                isEjecting={photo.isEjecting}
+                            />
+                        ))}
+
+                        {/* Fixed Camera Container */}
+                        <div 
+                            id={CAMERA_CONTAINER_ID}
+                            className="fixed bg-transparent z-20 transition-shadow duration-500"
+                        >
+                            {/* Camera Body Image */}
+                            <img
+                                src="https://s.baoyu.io/images/retro-camera.webp"
+                                alt="Retro Instant Camera"
+                                className="absolute w-full h-full object-cover left-0 bottom-0 z-20 pointer-events-none"
+                            />
+
+                            {/* Viewfinder (Live Video Feed) */}
+                            <div className="viewfinder">
+                                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover"></video>
+                            </div>
+
+                            {/* Canvas for Capture (Hidden) */}
+                            <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+
+                            {/* Photo Ejection Slot Area (relative to container) */}
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[35%] h-[100%] z-10 pointer-events-none">
+                                {/* Only render the currently ejecting/developing photo here */}
+                                {photos.filter(p => p.isEjecting).map(photo => (
+                                    <PhotoCard 
+                                        key={photo.id}
+                                        photo={photo}
+                                        onDelete={handleDeletePhoto}
+                                        onUpdateCaption={handleUpdateCaption}
+                                        isDeveloping={photo.isDeveloping}
+                                        isEjecting={photo.isEjecting}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Shutter Button (Invisible Clickable Area) */}
+                            <button 
+                                className="shutter-button"
+                                onClick={takePhoto}
+                                disabled={isLoading}
+                                aria-label="Take Photo"
+                                title="Click to capture!"
+                            >
+                                {isLoading && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <Icon name="Camera" size={30} className="text-red-500 animate-pulse" />
+                                    </div>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Instructions and Message Area */}
+                        <div className="fixed bottom-4 right-4 p-4 max-w-xs text-right bg-white/70 backdrop-blur-sm rounded-lg shadow-lg border-2 border-gray-300 z-50">
+                            <p className="text-sm text-gray-700 font-handwritten mb-2">
+                                <span className='font-bold text-lg'>说明:</span><br/>
+                                1. 点击快门按钮拍照。<br/>
+                                2. 等待照片弹出并显影。<br/>
+                                3. 将照片拖到墙上任意放置。<br/>
+                                4. 悬停在文字上可编辑或重新生成标题。<br/>
+                                5. 悬停在照片卡片上可下载/删除。
+                            </p>
+                            {message && (
+                                <p className="text-red-600 text-xs mt-1 border-t pt-1 border-red-300">{message}</p>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        };
+
+        // Render the application
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>
