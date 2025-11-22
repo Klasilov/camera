@@ -4,444 +4,564 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小猪相机 (Piggy Camera)</title>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- React & ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-
-    <!-- Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Framer Motion -->
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-
-    <!-- html2canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <!-- Lucide Icons (Development version for browser) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Google Fonts: Smiley Sans (using Noto Sans SC as fallback/proxy if Smiley not available, 
-         but trying to use a font that looks close or importing a specific one if possible. 
-         Since Smiley Sans is a specific Chinese font, we'll try to import it or use a cursive fallback) -->
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap"
-        rel="stylesheet">
-
+    <title>西南交通大学历史沿革 - Southwest Jiaotong University History</title>
     <style>
-        /* Custom Font Setup */
-        @font-face {
-            font-family: 'Smiley Sans';
-            src: url('https://cdn.jsdelivr.net/gh/atelier-anchor/smiley-sans@v2.0.1/fonts/SmileySans-Oblique.ttf') format('truetype');
-            font-display: swap;
+        /* --- 1. Variables & Reset --- */
+        :root {
+            --swjtu-blue: #003366;
+            --swjtu-gold: #FFC400;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg-white: #ffffff;
+            --bg-light: #f8f8f8;
+            --bg-dark: #1a1a1a;
+            --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+            --font-main: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Smiley Sans', 'Ma Shan Zheng', cursive, sans-serif;
-            background-color: #f3f4f6;
-            overflow: hidden;
-            /* Prevent scrolling */
-            user-select: none;
+            font-family: var(--font-main);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--bg-white);
+            overflow-x: hidden;
         }
 
-        /* Custom Scrollbar for any scrolling elements if needed */
-        ::-webkit-scrollbar {
-            width: 8px;
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: color var(--transition-speed) ease;
         }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        ul {
+            list-style: none;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+        /* --- 2. Typography & Utilities --- */
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--swjtu-blue);
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background-color: var(--swjtu-gold);
+            margin: 10px auto 0;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        section:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        /* --- 3. Header & Navigation --- */
+        header {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            height: 70px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--swjtu-blue);
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            color: var(--swjtu-gold);
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            font-size: 1rem;
+            color: var(--text-dark);
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--swjtu-blue);
+            transition: width var(--transition-speed) ease;
+        }
+
+        .nav-link:hover {
+            color: var(--swjtu-blue);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Mobile Menu Toggle (Checkbox Hack) */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+        }
+
+        .bar {
+            width: 25px;
+            height: 3px;
+            background-color: var(--swjtu-blue);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        #menu-checkbox {
+            display: none;
+        }
+
+        /* --- 4. Hero Section --- */
+        #hero {
+            height: 100vh;
+            background: linear-gradient(135deg, rgba(0, 51, 102, 0.9), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            /* Placeholder background */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 0;
+            margin-top: 0;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            padding: 0 20px;
+            animation: fadeIn Up 1s ease-out;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn-cta {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--swjtu-gold);
+            color: var(--swjtu-blue);
+            font-weight: 700;
             border-radius: 4px;
+            transition: transform 0.2s ease, background-color 0.2s ease;
         }
 
-        /* Leather Texture Pattern */
-        .leather-texture {
-            background-color: #1a1a1a;
-            background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23262626' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+        .btn-cta:hover {
+            background-color: #e6b000;
+            transform: translateY(-2px);
         }
 
-        /* Metal Texture */
-        .metal-texture {
-            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        /* --- 5. History Section (Grid) --- */
+        #history {
+            background-color: var(--bg-white);
         }
 
-        /* Lens Reflection */
-        .lens-reflection {
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 20%),
-                radial-gradient(circle at 70% 70%, rgba(100, 100, 255, 0.1) 0%, rgba(100, 100, 255, 0) 20%);
+        .history-grid {
+            display: grid;
+            gap: 2rem;
+            /* Default Mobile: 1 column */
+            grid-template-columns: 1fr;
+        }
+
+        .timeline-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            display: flex;
+            flex-direction: column;
+            border-top: 4px solid var(--swjtu-blue);
+        }
+
+        .timeline-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .timeline-card:hover .card-image {
+            transform: scale(1.05);
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .period-badge {
+            display: inline-block;
+            background-color: var(--swjtu-blue);
+            color: var(--swjtu-gold);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            align-self: flex-start;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .card-text {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            text-align: justify;
+            line-height: 1.7;
+        }
+
+        /* --- 6. Other Sections --- */
+        #figures,
+        #gallery,
+        #today {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- 7. Footer --- */
+        footer {
+            background-color: var(--swjtu-blue);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer-content p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* --- 8. Media Queries --- */
+
+        /* Tablet (768px - 1199px) */
+        @media (min-width: 768px) {
+            .history-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero-title {
+                font-size: 5rem;
+            }
+        }
+
+        /* Desktop (Min 1200px) */
+        @media (min-width: 1200px) {
+            .history-grid {
+                grid-template-columns: repeat(4, 1fr);
+                margin: 0 20px;
+                /* Extra margin as requested */
+            }
+        }
+
+        /* Mobile Navigation Logic */
+        @media (max-width: 767px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-menu {
+                position: absolute;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background-color: white;
+                flex-direction: column;
+                padding: 20px 0;
+                box-shadow: 0 10px 10px rgba(0, 0, 0, 0.05);
+                transform: translateY(-150%);
+                transition: transform 0.3s ease-in-out;
+                gap: 0;
+            }
+
+            .nav-menu li {
+                width: 100%;
+                text-align: center;
+            }
+
+            .nav-link {
+                display: block;
+                padding: 15px 0;
+                width: 100%;
+            }
+
+            .nav-link::after {
+                display: none;
+                /* Remove underline effect on mobile */
+            }
+
+            /* Checkbox Hack Implementation */
+            #menu-checkbox:checked~.nav-menu {
+                transform: translateY(0);
+            }
+
+            #menu-checkbox:checked~.menu-toggle .bar:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 6px);
+            }
+
+            #menu-checkbox:checked~.menu-toggle .bar:nth-child(2) {
+                opacity: 0;
+            }
+
+            #menu-checkbox:checked~.menu-toggle .bar:nth-child(3) {
+                transform: rotate(-45deg) translate(5px, -6px);
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
 
-<body class="h-screen w-screen overflow-hidden bg-stone-100 relative">
-    <div id="root"></div>
+<body>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback } = React;
-        const { motion, AnimatePresence } = window.Motion;
+    <!-- Header -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">SWJTU <span>HISTORY</span></a>
 
-        // --- Icons ---
-        // Simple SVG components since we can't easily use lucide-react imports in standalone babel
-        const CameraIcon = ({ size = 24, color = "currentColor" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>
-        );
-        const DownloadIcon = ({ size = 24, color = "currentColor" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-        );
-        const TrashIcon = ({ size = 24, color = "currentColor" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-        );
-        const RefreshCwIcon = ({ size = 16, color = "currentColor" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
-        );
-        const EditIcon = ({ size = 16, color = "currentColor" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>
-        );
+            <input type="checkbox" id="menu-checkbox">
+            <label for="menu-checkbox" class="menu-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </label>
 
-        // --- Utils ---
-        const playShutterSound = () => {
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.m4a'); // Simple camera shutter sound
-            audio.volume = 0.5;
-            audio.play().catch(e => console.log("Audio play failed", e));
-        };
+            <ul class="nav-menu">
+                <li><a href="#hero" class="nav-link">首页</a></li>
+                <li><a href="#history" class="nav-link">历史沿革</a></li>
+                <li><a href="#figures" class="nav-link">重要人物</a></li>
+                <li><a href="#gallery" class="nav-link">历史图志</a></li>
+                <li><a href="#today" class="nav-link">今日交大</a></li>
+            </ul>
+        </div>
+    </header>
 
-        const generateCaption = () => {
-            const captions = [
-                "今天也是元气满满的小猪！",
-                "可爱值爆表啦~",
-                "哼哼~ 发现一只小可爱！",
-                "这是谁家的小猪猪呀？",
-                "捕捉到今日份的快乐！",
-                "Smile! 🐷",
-                "小猪猪的奇妙冒险~",
-                "今日运势：超级可爱！"
-            ];
-            return captions[Math.floor(Math.random() * captions.length)];
-        };
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">竢实扬华</h1>
+            <p class="hero-subtitle">自强不息 · 交通天下 · 1896 - 至今</p>
+            <a href="#history" class="btn-cta">探索历史</a>
+        </div>
+    </section>
 
-        const formatDate = () => {
-            const now = new Date();
-            return `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
-        };
+    <!-- History Section -->
+    <section id="history">
+        <div class="container">
+            <h2 class="section-title">历史沿革</h2>
+            <p class="section-subtitle">跨越三个世纪的辉煌历程</p>
 
-        // --- Components ---
-
-        const PhotoCard = ({ id, imageSrc, initialX, initialY, onDelete }) => {
-            const [caption, setCaption] = useState(generateCaption());
-            const cardRef = useRef(null);
-
-            const handleDownload = async (e) => {
-                e.stopPropagation(); // Prevent drag start
-                if (cardRef.current) {
-                    try {
-                        const canvas = await html2canvas(cardRef.current, {
-                            backgroundColor: null,
-                            scale: 2 // Higher resolution
-                        });
-                        const link = document.createElement('a');
-                        link.download = `piggy-photo-${Date.now()}.png`;
-                        link.href = canvas.toDataURL();
-                        link.click();
-                    } catch (err) {
-                        console.error("Download failed", err);
-                    }
-                }
-            };
-
-            const handleDelete = (e) => {
-                e.stopPropagation();
-                onDelete(id);
-            };
-
-            const refreshCaption = (e) => {
-                e.stopPropagation();
-                setCaption(generateCaption());
-            };
-
-            return (
-                <motion.div
-                    drag
-                    dragMomentum={false}
-                    initial={{ x: initialX, y: initialY, scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
-                    className="absolute z-10 cursor-grab active:cursor-grabbing group"
-                    style={{ touchAction: 'none' }}
-                >
-                    <div
-                        ref={cardRef}
-                        className="bg-white p-4 pb-2 shadow-xl transform rotate-1 hover:rotate-0 transition-transform duration-300 relative w-[320px]"
-                    >
-                        {/* Piggy Ring Decoration */}
-                        <div className="absolute inset-0 pointer-events-none border-[12px] border-transparent border-image-slice-1"
-                            style={{
-                                borderImageSource: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='20' text-anchor='middle' dy='.3em'%3E🐷%3C/text%3E%3C/svg%3E")`,
-                                borderImageSlice: 30,
-                                borderImageRepeat: 'round',
-                                opacity: 0.3
-                            }}
-                        />
-
-                        {/* Header */}
-                        <div className="text-center mb-2">
-                            <h3 className="text-xl font-bold text-pink-500 tracking-widest">小猪照片</h3>
-                        </div>
-
-                        {/* Photo */}
-                        <div className="aspect-[4/3] bg-gray-100 overflow-hidden border-2 border-gray-100">
-                            <img src={imageSrc} alt="Captured" className="w-full h-full object-cover" draggable={false} />
-                        </div>
-
-                        {/* Footer / Caption */}
-                        <div className="mt-3 flex flex-col items-center justify-center text-gray-600 min-h-[60px]">
-                            <p className="text-sm font-medium text-center px-2 relative group/caption">
-                                {caption}
-                                <button
-                                    onClick={refreshCaption}
-                                    className="ml-2 inline-block opacity-0 group-hover/caption:opacity-100 transition-opacity hover:text-pink-500"
-                                >
-                                    <RefreshCwIcon size={12} />
-                                </button>
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1 font-mono">{formatDate()}</p>
-                        </div>
-
-                        {/* Hover Controls (Not part of download) */}
-                        <div
-                            className="absolute -top-3 -right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                            data-html2canvas-ignore
-                        >
-                            <button
-                                onClick={handleDownload}
-                                className="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
-                                title="Download"
-                            >
-                                <DownloadIcon size={16} />
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-colors"
-                                title="Delete"
-                            >
-                                <TrashIcon size={16} />
-                            </button>
-                        </div>
+            <div class="history-grid">
+                <!-- Card 1: 1896-1905 -->
+                <article class="timeline-card">
+                    <div class="card-image-container">
+                        <img src="https://dag.swjtu.edu.cn/__local/3/8B/CE/134176E82C61FE649C03851A8BE_77858D93_8DB16.png"
+                            alt="清末铁路学堂" class="card-image">
                     </div>
-                </motion.div>
-            );
-        };
-
-        const CameraBody = ({ videoRef, onShutter }) => {
-            return (
-                <div className="fixed bottom-16 left-16 w-[500px] h-[360px] z-20 select-none">
-                    {/* Main Body Shape */}
-                    <div className="absolute inset-0 bg-[#e5e5e5] rounded-[40px] shadow-2xl flex flex-col overflow-hidden border-b-8 border-[#d4d4d4]">
-
-                        {/* Top Metal Plate */}
-                        <div className="h-24 metal-texture w-full border-b border-gray-400 relative flex items-center justify-between px-8">
-                            {/* Brand Name */}
-                            <div className="text-2xl font-bold text-gray-700 tracking-widest italic">
-                                FUJIPIG
-                            </div>
-
-                            {/* Viewfinder Bump */}
-                            <div className="absolute left-1/2 top-0 -translate-x-1/2 w-32 h-12 bg-[#cbd5e1] rounded-b-xl shadow-inner border-b border-gray-400 flex items-center justify-center">
-                                <div className="w-20 h-6 bg-black rounded-full opacity-80"></div>
-                            </div>
-
-                            {/* Shutter Button Area */}
-                            <div className="relative">
-                                <button
-                                    onClick={onShutter}
-                                    className="w-14 h-14 rounded-full bg-gradient-to-b from-gray-200 to-gray-400 shadow-[0_4px_0_#94a3b8] active:shadow-none active:translate-y-1 transition-all flex items-center justify-center border-2 border-gray-300 group"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-red-500 shadow-inner group-active:bg-red-600"></div>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Leather Body */}
-                        <div className="flex-1 leather-texture relative flex">
-                            {/* Grip */}
-                            <div className="absolute right-4 top-8 w-12 h-48 bg-[#262626] rounded-l-2xl shadow-lg opacity-80"></div>
-
-                            {/* Lens Mount (Decorative) */}
-                            <div className="absolute left-12 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#262626] shadow-2xl border-4 border-[#404040] flex items-center justify-center">
-                                {/* Inner Lens Rings */}
-                                <div className="w-40 h-40 rounded-full bg-[#171717] border-2 border-gray-600 flex items-center justify-center">
-                                    <div className="w-32 h-32 rounded-full bg-[#0a0a0a] border border-gray-700 flex items-center justify-center lens-reflection relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/20 to-blue-900/20"></div>
-                                        <div className="text-xs text-gray-500 font-mono tracking-tighter mt-16">
-                                            PIGGY LENS 35mm 1:1.4
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Flip Screen (The actual Viewfinder) */}
-                            <div className="absolute left-[280px] top-8 w-[180px] h-[140px] bg-black rounded-lg border-4 border-[#404040] shadow-lg overflow-hidden origin-left transform -rotate-y-12 perspective-1000">
-                                <div className="w-full h-full bg-gray-900 relative">
-                                    <video
-                                        ref={videoRef}
-                                        autoPlay
-                                        playsInline
-                                        muted
-                                        className="w-full h-full object-cover transform scale-x-[-1]" // Mirror effect
-                                    />
-                                    {/* Screen UI Overlay */}
-                                    <div className="absolute inset-0 pointer-events-none p-2 flex flex-col justify-between text-[10px] text-green-400 font-mono opacity-80">
-                                        <div className="flex justify-between">
-                                            <span>REC</span>
-                                            <span>[ 1600 ]</span>
-                                        </div>
-                                        <div className="flex justify-center">
-                                            <div className="w-4 h-4 border border-green-400/50"></div>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>ISO 400</span>
-                                            <span>1/125</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Hinge */}
-                                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full w-4 h-20 bg-[#404040] rounded-l-md"></div>
-                            </div>
-
-                            {/* Bottom Text */}
-                            <div className="absolute bottom-4 right-8 text-gray-500 font-mono text-xs opacity-50">
-                                PIG-X100V
-                            </div>
-                        </div>
+                    <div class="card-content">
+                        <span class="period-badge">1896 - 1905</span>
+                        <h3 class="card-title">清末肇建：山海关北洋铁路官学堂</h3>
+                        <p class="card-text">
+                            1896年，在“实业救国”的呼声中，北洋官铁路局创办了中国第一所铁路学堂——山海关北洋铁路官学堂。这是西南交通大学的前身，也是中国近代土木工程高等教育的发祥地。学堂选址于山海关，旨在培养中国自己的铁路工程技术人才，打破西方列强对中国铁路建设的技术垄断。建校之初，学堂即确立了严谨治学、注重实践的教育传统，引用西方先进教材，聘请外籍教员，为中国铁路事业的起步输送了第一批宝贵的专业人才，开启了中国轨道交通教育的先河。
+                        </p>
                     </div>
-                </div>
-            );
-        };
+                </article>
 
-        const App = () => {
-            const videoRef = useRef(null);
-            const [photos, setPhotos] = useState([]);
-            const [toast, setToast] = useState(null);
-
-            // Initialize Camera
-            useEffect(() => {
-                const startCamera = async () => {
-                    try {
-                        const stream = await navigator.mediaDevices.getUserMedia({
-                            video: { width: 1280, height: 720 }
-                        });
-                        if (videoRef.current) {
-                            videoRef.current.srcObject = stream;
-                        }
-                    } catch (err) {
-                        console.error("Error accessing camera:", err);
-                        alert("无法访问摄像头，请确保已授予权限。");
-                    }
-                };
-                startCamera();
-            }, []);
-
-            const handleShutter = () => {
-                if (!videoRef.current) return;
-
-                playShutterSound();
-
-                // Show Toast
-                setToast("已捕获小猪照片");
-                setTimeout(() => setToast(null), 2000);
-
-                // Capture Photo
-                const canvas = document.createElement('canvas');
-                canvas.width = videoRef.current.videoWidth;
-                canvas.height = videoRef.current.videoHeight;
-                const ctx = canvas.getContext('2d');
-
-                // Draw and mirror
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-                ctx.drawImage(videoRef.current, 0, 0);
-
-                const imageSrc = canvas.toDataURL('image/png');
-
-                // Add to photos with random position near center but slightly offset
-                const newPhoto = {
-                    id: Date.now(),
-                    src: imageSrc,
-                    x: window.innerWidth / 2 - 160 + (Math.random() * 100 - 50),
-                    y: window.innerHeight / 2 - 200 + (Math.random() * 100 - 50)
-                };
-
-                setPhotos(prev => [...prev, newPhoto]);
-            };
-
-            const deletePhoto = (id) => {
-                setPhotos(prev => prev.filter(p => p.id !== id));
-            };
-
-            return (
-                <div className="w-full h-full relative">
-                    {/* Header */}
-                    <div className="absolute top-8 left-0 right-0 text-center z-10 pointer-events-none">
-                        <h1 className="text-5xl font-bold text-gray-800 drop-shadow-sm tracking-wider">小猪相机</h1>
-                        <p className="text-gray-500 mt-2 text-lg">Piggy Camera</p>
+                <!-- Card 2: 1905-1952 -->
+                <article class="timeline-card">
+                    <div class="card-image-container">
+                        <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                            alt="唐山交大时期" class="card-image">
                     </div>
-
-                    {/* Instructions */}
-                    <div className="fixed bottom-8 right-8 text-right text-gray-400 z-0 pointer-events-none">
-                        <p>点击快门拍照</p>
-                        <p>拖拽照片整理</p>
-                        <p>悬停下载/删除</p>
+                    <div class="card-content">
+                        <span class="period-badge">1905 - 1952</span>
+                        <h3 class="card-title">唐山鼎盛：交通大学唐山学校</h3>
+                        <p class="card-text">
+                            1905年，学校迁址唐山，更名为唐山路矿学堂，后历经唐山工业专门学校、交通大学唐山学校等时期。这一时期被誉为“唐山鼎盛”时期，学校名师云集，英才辈出，享有“东方康奈尔”之美誉。茅以升、竺可桢、林同炎等一大批科学巨匠和工程大师在此求学或任教。学校形成了“严谨治学、严格要求”的“双严”传统，在土木工程、矿冶工程等领域达到了当时世界一流水平。尽管时局动荡，但唐山交大始终坚持高标准的学术追求，为国家培养了无数栋梁之才，奠定了其在中国工程教育界的崇高地位。
+                        </p>
                     </div>
+                </article>
 
-                    {/* Photo Wall (Area for photos) */}
-                    <div className="absolute inset-0 z-10 pointer-events-none">
-                        <div className="w-full h-full pointer-events-auto">
-                            <AnimatePresence>
-                                {photos.map(photo => (
-                                    <PhotoCard
-                                        key={photo.id}
-                                        id={photo.id}
-                                        imageSrc={photo.src}
-                                        initialX={photo.x}
-                                        initialY={photo.y}
-                                        onDelete={deletePhoto}
-                                    />
-                                ))}
-                            </AnimatePresence>
-                        </div>
+                <!-- Card 3: 1937-1949 -->
+                <article class="timeline-card">
+                    <div class="card-image-container">
+                        <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                            alt="抗战西迁" class="card-image">
                     </div>
+                    <div class="card-content">
+                        <span class="period-badge">1937 - 1949</span>
+                        <h3 class="card-title">抗战西迁：内迁办学与民族脊梁</h3>
+                        <p class="card-text">
+                            1937年抗日战争全面爆发，学校被迫开始流亡办学。师生们怀揣“教育救国”的信念，辗转湘、黔、滇、川等地，历经艰辛，最终在贵州平越（今福泉）坚持办学。在极其艰苦的条件下，交大师生弦歌不辍，不仅坚持完成了教学任务，还积极投身于抗战后方的交通建设，如抢修滇缅公路、黔桂铁路等生命线。这一时期，学校展现了顽强的生命力和深厚的爱国情怀，被誉为“流动的大学”，体现了交大人在民族危亡时刻挺身而出的责任担当，是民族脊梁的真实写照。
+                        </p>
+                    </div>
+                </article>
 
-                    {/* Camera Body */}
-                    <CameraBody videoRef={videoRef} onShutter={handleShutter} />
+                <!-- Card 4: 1949-Present -->
+                <article class="timeline-card">
+                    <div class="card-image-container">
+                        <img src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                            alt="今日交大" class="card-image">
+                    </div>
+                    <div class="card-content">
+                        <span class="period-badge">1949 - 至今</span>
+                        <h3 class="card-title">新局与发展：峨眉与成都校区</h3>
+                        <p class="card-text">
+                            新中国成立后，为支援大三线建设，学校于1964年内迁四川峨眉。1972年定名为西南交通大学。1989年，学校主体迁入成都，形成了“一校两地三校区”的办学格局。进入新时代，西南交大紧抓国家高铁发展战略机遇，在轨道交通领域持续保持领先地位，牵头建设了轨道交通国家实验室（筹），参与了青藏铁路、京沪高铁等所有国家重大轨道交通工程的建设。学校正向着“交通特色鲜明的世界一流大学”目标迈进，继续书写着“竢实扬华，自强不息”的新篇章。
+                        </p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
 
-                    {/* Toast Notification */}
-                    <AnimatePresence>
-                        {toast && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: -20, scale: 0.9 }}
-                                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-8 py-4 rounded-full shadow-2xl z-50 flex items-center gap-3 backdrop-blur-sm"
-                            >
-                                <span className="text-2xl">📸</span>
-                                <span className="text-xl font-medium tracking-wide">{toast}</span>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            );
-        };
+    <!-- Important Figures Section (Placeholder) -->
+    <section id="figures">
+        <div class="container">
+            <h2 class="section-title">重要人物</h2>
+            <p class="section-subtitle">大师云集 星光璀璨</p>
+            <div style="text-align: center; padding: 40px; background: #eee; border-radius: 8px;">
+                <p>人物展示区域（茅以升、竺可桢等）</p>
+            </div>
+        </div>
+    </section>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    <!-- Gallery Section (Placeholder) -->
+    <section id="gallery">
+        <div class="container">
+            <h2 class="section-title">历史图志</h2>
+            <p class="section-subtitle">光影中的岁月印记</p>
+            <div style="text-align: center; padding: 40px; background: #eee; border-radius: 8px;">
+                <p>历史照片画廊区域</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Today Section (Placeholder) -->
+    <section id="today">
+        <div class="container">
+            <h2 class="section-title">今日交大</h2>
+            <p class="section-subtitle">迈向世界一流大学</p>
+            <div style="text-align: center; padding: 40px; background: #eee; border-radius: 8px;">
+                <p>现代校园风貌展示区域</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <h3>西南交通大学</h3>
+            <p>Southwest Jiaotong University</p>
+            <p style="margin-top: 20px;">&copy; 2023 SWJTU History Project. All Rights Reserved.</p>
+        </div>
+    </footer>
+
 </body>
 
 </html>
